@@ -1,0 +1,96 @@
+# -*- coding: utf-8 -*-
+import urllib2
+from bs4 import BeautifulSoup
+
+URL = "https://en.wikipedia.org/wiki/List_of_women_in_D%C3%A1il_%C3%89ireann"
+
+def get_most_recent_year(tbl):
+    for tr in tbl.find_all('tr'):
+        tr = tr
+    year = tr.find_all('td')[1].a.text
+    return year
+    
+def list_female_TDs():
+    response = urllib2.urlopen(URL)
+    page_source = response.read()
+    soup = BeautifulSoup(page_source)
+
+    tbl = soup.find('table')
+
+    year = get_most_recent_year(tbl)
+
+    l = []
+    for el in tbl.find_all('a', text=year):
+        TD = el.parent.parent.parent.td.a['title']
+        if "(politician)" in TD:
+            TD = " ".join(TD.split()[:-1])
+        l.append(TD)
+
+    return sorted(l)
+
+if __name__=="__main__":
+    exampleHTML = """<table class="wikitable sortable" style="font-size:95%">
+<tr valign="top">
+<th>Name</th>
+<th>First elected<br/>
+<small><span style="font-weight:normal"><i>b</i>=by-election</span></small></th>
+<th>Constituency<br/>
+<small>where first elected</small></th>
+<th colspan="2">Party<br/>
+<small>as first elected</small></th>
+<th>Age<br/>
+<small>when first elected</small></th>
+<th class="unsortable">Constituencies represented</th>
+</tr>
+<tr>
+<td><span class="sortkey"><b>Markievicz</b>, Constance</span><span class="vcard"><span class="fn"><a href="/wiki/Constance_Markievicz" title="Constance Markievicz">Constance <b>Markievicz</b></a></span></span></td>
+<td><span class="sortkey" style="display:none;">1918-12-14 !</span><span class="sorttext"><a href="/wiki/Irish_general_election,_1918" title="Irish general election, 1918">1918</a></span></td>
+<td><a href="/wiki/Dublin_St_Patrick%27s_(UK_Parliament_constituency)" title="Dublin St Patrick's (UK Parliament constituency)">Dublin St Patrick's</a></td>
+<th style="background-color: #008800"></th>
+<td><a href="/wiki/Sinn_F%C3%A9in" title="Sinn Féin">Sinn Féin</a><br/>
+<span class="nowrap"><small>(<a href="/wiki/Fianna_F%C3%A1il" title="Fianna Fáil">Fianna Fáil</a> from 1926)</small></span></td>
+<td>50</td>
+<td><a href="/wiki/Dublin_St_Patrick%27s_(UK_Parliament_constituency)" title="Dublin St Patrick's (UK Parliament constituency)">Dublin St Patrick's</a> 1918–1921,<br/>
+<a href="/wiki/Dublin_South_(D%C3%A1il_%C3%89ireann_constituency)" title="Dublin South (Dáil Éireann constituency)">Dublin South</a> 1921–2, 1923-27 (reelected in June, died in July)</td>
+</tr>
+<tr>
+<td><span class="sortkey"><b>Clarke</b>, Kathleen</span><span class="vcard"><span class="fn"><a href="/wiki/Kathleen_Clarke" title="Kathleen Clarke">Kathleen <b>Clarke</b></a></span></span></td>
+<td><span class="sortkey" style="display:none;">1921-05-24 !</span><span class="sorttext"><a href="/wiki/Irish_elections,_1921" title="Irish elections, 1921">1921</a></span></td>
+<td><a href="/wiki/Dublin_Mid_(D%C3%A1il_%C3%89ireann_constituency)" title="Dublin Mid (Dáil Éireann constituency)">Dublin Mid</a></td>
+<th style="background-color: #008800"></th>
+<td><a href="/wiki/Sinn_F%C3%A9in" title="Sinn Féin">Sinn Féin</a><br/>
+<span class="nowrap"><small>(<a href="/wiki/Fianna_F%C3%A1il" title="Fianna Fáil">Fianna Fáil</a> from 1926)</small></span></td>
+<td>43</td>
+<td><a href="/wiki/Dublin_Mid_(D%C3%A1il_%C3%89ireann_constituency)" title="Dublin Mid (Dáil Éireann constituency)">Dublin Mid</a> 1921–22, 1927 (June)-1927 (September)</td>
+</tr>
+<tr>
+<td><span class="sortkey"><b>English</b>, Ada</span><span class="vcard"><span class="fn"><a href="/wiki/Ada_English" title="Ada English">Ada <b>English</b></a></span></span></td>
+<td><span class="sortkey" style="display:none;">1921-05-24 !</span><span class="sorttext"><a href="/wiki/Irish_elections,_1921" title="Irish elections, 1921">1921</a></span></td>
+<td><a href="/wiki/National_University_of_Ireland_(constituency)#D.C3.A1il_.C3.89ireann" title="National University of Ireland (constituency)">NUI</a></td>
+<th style="background-color: #008800"></th>
+<td><a href="/wiki/Sinn_F%C3%A9in" title="Sinn Féin">Sinn Féin</a></td>
+<td><span class="sortkey" style="display:none;">43 !</span><span class="sorttext"><i>c.</i>43</span></td>
+<td><a href="/wiki/National_University_of_Ireland_(constituency)#D.C3.A1il_.C3.89ireann" title="National University of Ireland (constituency)">NUI</a> 1921–22</td>
+</tr>
+<tr>
+<td><span class="sortkey"><b>MacSwiney</b>, Mary</span><span class="vcard"><span class="fn"><a href="/wiki/Mary_MacSwiney" title="Mary MacSwiney">Mary <b>MacSwiney</b></a></span></span></td>
+<td><span class="sortkey" style="display:none;">1921-05-24 !</span><span class="sorttext"><a href="/wiki/Irish_elections,_1921" title="Irish elections, 1921">1921</a></span></td>
+<td><a href="/wiki/Cork_Borough_(D%C3%A1il_%C3%89ireann_constituency)" title="Cork Borough (Dáil Éireann constituency)">Cork Borough</a></td>
+<th style="background-color: #008800"></th>
+<td><a href="/wiki/Sinn_F%C3%A9in" title="Sinn Féin">Sinn Féin</a></td>
+<td>49</td>
+<td><a href="/wiki/Cork_Borough_(D%C3%A1il_%C3%89ireann_constituency)" title="Cork Borough (Dáil Éireann constituency)">Cork Borough</a> 1921–27 (June)</td>
+</tr>
+<tr>
+<td><span class="sortkey"><b>O'Callaghan</b>, Kathleen</span><span class="vcard"><span class="fn"><a href="/wiki/Kathleen_O%27Callaghan" title="Kathleen O'Callaghan">Kathleen <b>O'Callaghan</b></a></span></span></td>
+<td><span class="sortkey" style="display:none;">1921-05-24 !</span><span class="sorttext"><a href="/wiki/Irish_elections,_1921" title="Irish elections, 1921">1922</a></span></td>
+<td><a href="/wiki/Limerick_City%E2%80%93Limerick_East_(D%C3%A1il_%C3%89ireann_constituency)" title="Limerick City–Limerick East (Dáil Éireann constituency)">Limerick City–Lmk East</a></td>
+<th style="background-color: #008800"></th>
+<td><a href="/wiki/Sinn_F%C3%A9in" title="Sinn Féin">Sinn Féin</a></td>
+<td>33</td>
+<td><a href="/wiki/Limerick_City%E2%80%93Limerick_East_(D%C3%A1il_%C3%89ireann_constituency)" title="Limerick City–Limerick East (Dáil Éireann constituency)">Limerick City–Limerick East</a> 1921–23</td>
+</tr>
+</table>"""
+    print get_most_recent_year(BeautifulSoup(exampleHTML))
+
+    print females_TDs()
