@@ -22,44 +22,90 @@ import sys
 import os
 import dlib
 import glob
+import cv2
+import numpy as np
 from skimage import io
 
-if len(sys.argv) != 3:
-    print(
-        "Give the path to the trained shape predictor model as the first "
-        "argument and then the directory containing the facial images.\n"
-        "For example, if you are in the python_examples folder then "
-        "execute this program by running:\n"
-        "    ./face_landmark_detection.py shape_predictor_68_face_landmarks.dat ../examples/faces\n"
-        "You can download a trained facial shape predictor from:\n"
-        "    http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2")
-    exit()
+NUM_FEATURES = 68
+predictor_path = "learning_data/shape_predictor_68_face_landmarks.dat"
 
-"""TO DO:
-* create folders for transformed pics
-* calculate transform matrix
-* transform the images and save them """
-
-predictor_path = sys.argv[1]
-faces_folder_path = sys.argv[2]
-
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor(predictor_path)
-#win = dlib.image_window()
-
-for f in glob.glob(os.path.join(faces_folder_path, "*.jpg")):
-    print("Processing file: {}".format(f))
-    img = io.imread(f)
-
-    dets = detector(img, 1)
-    for k, d in enumerate(dets):
-        print("Detection {}: Left: {} Top: {} Right: {} Bottom: {}".format(
-            k, d.left(), d.top(), d.right(), d.bottom()))
-        # Get the landmarks/parts for the face in box d.
-        shape = predictor(img, d)
-        print "Part 36: {}, Part 45: {}".format(shape.part(36), shape.part(45))
-        print("Part 0: {}, Part 1: {} ...".format(shape.part(0),
-                                                  shape.part(1)))
+def make_equil_triangle(l_pnt, r_pnt):
+    l_pnt, r_pnt = np.array(l_pnt), np.array(r_pnt)
+    rad = np.deg2rad(60)
+    third_pnt =  np.dot(r_pnt-l_pnt, [[np.cos(rad), np.sin(rad)], [-np.sin(rad), np.cos(rad)]])
+    third_pnt += l_pnt
+    return third_pnt
 
 
+def point2array(point):
+    return np.array((point.x, point.y))
 
+
+def transform_images(faces_folder_path):
+
+    #create folders to save pictures
+    new_folder = os.path.basename(faces_folder_path.strip("\/."))
+    new_folder +='Transformed'
+    if not os.path.exists(new_folder):
+        os.makedirs(new_folder)
+
+    #load model
+    detector = dlib.get_frontal_face_detector()
+    predictor = dlib.shape_predictor(predictor_path)
+
+    #set size of outputted images
+    cols, rows = 600, 600
+
+    #calculate transformation outpoints
+    l_eye, r_eye = (180,200), (420,200)
+    outPnts = np.array([l_eye, r_eye, make_equil_triangle(l_eye, r_eye)])
+
+    #find feature points for jpg files in faces_folder_path
+    for f in glob.glob(os.path.join(faces_folder_path, "*.jpg")):
+        print("Processing file: {}".format(f))
+        img = io.imread(f)
+
+        dets = detector(img, 1)
+        for k, d in enumerate(dets):
+            # Get the landmarks/parts for the face in box d.
+            shape = predictor(img, d)
+            print "Part 36: {}, Part 45: {}".format(shape.part(36), shape.part(45))
+            p1 = point2array(shape.part(36))
+            p2 = point2array(shape.part(45))
+            inPnts = np.array([p1, p2, make_equil_triangle(p1, p2)])
+            M = cv2.estimateRigidTransform(inPnts, outPnts, False)
+            img_transf = cv2.warpAffine(img,M,(cols,rows))
+            io.imsave(os.path.join(new_folder, os.path.basename(f)), img_transf)
+
+    return 0
+
+def sum_features(faces_folder_path)
+    avg_features = np.array([(0,0) for i in xrange(NUM_FEATURES)]) 
+    num_images = 0
+
+    #load model
+    detector = dlib.get_frontal_face_detector()
+    predictor = dlib.shape_predictor(predictor_path)
+    
+    for f in glob.glob(os.path.join(faces_folder_path, "*.jpg")):
+        print("Processing file: {}".format(f))
+        img = io.imread(f)
+
+        dets = detector(img, 1)
+        for k, d in enumerate(dets):
+            # Get the landmarks/parts for the face in box d.
+            shape = predictor(img, d)
+            for i, features in enumerate(avg_features):
+                avg_features[i] += point2array(shape.part(i))
+
+            num_images += 1
+
+    return num_images, avg_features/num_images
+
+
+if __name__ == '__main__':
+    transform_images('test/')
+    n, a = sum_features('test/')
+    print n
+    for i in a:
+        print i
