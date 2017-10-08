@@ -27,16 +27,16 @@ import numpy as np
 from skimage import io
 
 NUM_FEATURES = 68
-predictor_path = "learning_data/shape_predictor_68_face_landmarks.dat"
+PREDICTOR_PATH = "learning_data/shape_predictor_68_face_landmarks.dat"
 
 #set size of transformed images
-cols, rows = 600, 600
+COLS, ROWS = 600, 600
 
 def make_equil_triangle(l_pnt, r_pnt):
     l_pnt, r_pnt = np.array(l_pnt), np.array(r_pnt)
     rad = np.deg2rad(60)
-    third_pnt =  np.dot(r_pnt-l_pnt, [[np.cos(rad), np.sin(rad)], [-np.sin(rad), np.cos(rad)]])
-    third_pnt += l_pnt
+    rotate =  [[np.cos(rad), np.sin(rad)], [-np.sin(rad), np.cos(rad)]]
+    third_pnt = np.dot(r_pnt-l_pnt, rotate) + l_pnt
     return third_pnt
 
 
@@ -52,7 +52,7 @@ def transform_images(faces_folder_path, out_path):
 
     #load model
     detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor(predictor_path)
+    predictor = dlib.shape_predictor(PREDICTOR_PATH)
 
     #calculate transformation outpoints
     l_eye, r_eye = (180,200), (420,200)
@@ -64,7 +64,7 @@ def transform_images(faces_folder_path, out_path):
         img = io.imread(f)
 
         dets = detector(img, 1)
-        for k, d in enumerate(dets):
+        for d in dets:
             # Get the landmarks/parts for the face in box d.
             shape = predictor(img, d)
 
@@ -73,7 +73,7 @@ def transform_images(faces_folder_path, out_path):
 
             inPnts = np.array([p1, p2, make_equil_triangle(p1, p2)])
             M = cv2.estimateRigidTransform(np.float32(inPnts), np.float32(outPnts), False)
-            img_transf = cv2.warpAffine(img,M,(cols,rows))
+            img_transf = cv2.warpAffine(img, M, (COLS,ROWS))
             io.imsave(os.path.join(out_path, os.path.basename(f)), img_transf)
 
     return 0
@@ -81,18 +81,18 @@ def transform_images(faces_folder_path, out_path):
 
 def get_average_points(faces_folder_path):
 
-    avg_features = np.array([(0,0) for i in xrange(NUM_FEATURES)]) 
+    avg_features = np.array([(0, 0) for i in xrange(NUM_FEATURES)]) 
     num_images = 0
 
     #load model
     detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor(predictor_path)
+    predictor = dlib.shape_predictor(PREDICTOR_PATH)
     
     for f in glob.glob(os.path.join(faces_folder_path, "*.jpg")):
         img = cv2.imread(f); 
         dets = detector(img, 1)
 
-        for k, d in enumerate(dets):
+        for d in dets:
             # Get the landmarks/parts for the face in box d.
             shape = predictor(img, d)
 
@@ -106,21 +106,21 @@ def get_average_points(faces_folder_path):
 
 def pointInRect(p, rect):
     #checks if point p is in rectangle rect
-    if p[0] < rect[0] :
+    if p[0] < rect[0]:
         return False
-    elif p[1] < rect[1] :
+    elif p[1] < rect[1]:
         return False
-    elif p[0] > rect[2] :
+    elif p[0] > rect[2]:
         return False
-    elif p[1] > rect[3] :
+    elif p[1] > rect[3]:
         return False
     return True
 
 
 def add_border_points(points):
     #add border points
-    border_points = np.array([(0,0), (cols/2,0), (cols-1, 0), (0, rows/2), (0, rows-1),
-                              (cols-1,rows/2), (cols-1,rows-1), (cols/2, rows-1)])
+    border_points = np.array([(0,0), (COLS/2,0), (COLS-1, 0), (0, ROWS/2), (0, ROWS-1),
+                              (COLS-1,ROWS/2), (COLS-1,ROWS-1), (COLS/2, ROWS-1)])
 
     return np.append(points, border_points, axis=0)
 
@@ -128,8 +128,8 @@ def add_border_points(points):
 def get_list_of_triangles(points):
     #get list of Delanay triangles
     
-    rect = (0, 0, cols, rows)
-    subdiv  = cv2.Subdiv2D(rect)
+    rect = (0, 0, COLS, ROWS)
+    subdiv = cv2.Subdiv2D(rect)
     
     for pnt in points:
         subdiv.insert((pnt[0], pnt[1]))
@@ -143,7 +143,7 @@ def get_list_of_triangles(points):
             ind = []
             for j in xrange(0, 3):
                 for k in xrange(0, len(points)):                    
-                    if(abs(tri[j][0] - points[k][0]) < 1.0 and abs(tri[j][1] - points[k][1]) < 1.0):
+                    if (abs(tri[j][0] - points[k][0]) < 1.0 and abs(tri[j][1] - points[k][1]) < 1.0):
                         ind.append(k)                            
             if len(ind) == 3:                                                
                 triList.append(ind)
@@ -151,10 +151,10 @@ def get_list_of_triangles(points):
     return triList
 
 
-def applyAffineTransform(src, srcTri, dstTri, size) :
+def applyAffineTransform(src, srcTri, dstTri, size):
     #based on code from https://github.com/spmallck/learnopencv
     # Given a pair of triangles, find the affine transform.
-    warpMat = cv2.getAffineTransform( np.float32(srcTri), np.float32(dstTri) )
+    warpMat = cv2.getAffineTransform( np.float32(srcTri), np.float32(dstTri))
     
     # Apply the Affine Transform just found to the src image
     dst = cv2.warpAffine( src, warpMat, (size[0], size[1]), None, flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101 )
@@ -183,8 +183,8 @@ def warp_triangle(img1, img2, tri1, tri2):
 
 
     # Get mask by filling triangle
-    mask = np.zeros((rect2[3], rect2[2], 3), dtype = np.float32)
-    cv2.fillConvexPoly(mask, np.int32(t2RectInt), (1.0, 1.0, 1.0), 16, 0);
+    mask = np.zeros((rect2[3], rect2[2], 3), dtype=np.float32)
+    cv2.fillConvexPoly(mask, np.int32(t2RectInt), (1.0, 1.0, 1.0), 16, 0)
 
     # Apply warpImage to small rectangular patches
     img1Rect = img1[rect1[1]:rect1[1] + rect1[3], rect1[0]:rect1[0] + rect1[2]]
@@ -209,7 +209,7 @@ def warp_triangle(img1, img2, tri1, tri2):
 def morph_to_average_face(folder_path, avg_points):
 
     #create output image
-    output = np.zeros((cols,rows,3), np.float32())
+    output = np.zeros((COLS,ROWS,3), np.float32())
 
     #add border points for the average feature points
     avg_points = add_border_points(avg_points)
@@ -219,7 +219,7 @@ def morph_to_average_face(folder_path, avg_points):
 
     #load model
     detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor(predictor_path)
+    predictor = dlib.shape_predictor(PREDICTOR_PATH)
 
     #read in images
     for f in glob.glob(os.path.join(folder_path, "*.jpg")):
@@ -230,12 +230,12 @@ def morph_to_average_face(folder_path, avg_points):
         for k, d in enumerate(dets):
             # Get the landmarks/parts for the face in box d.
 
-            new_img = np.zeros((cols,rows,3), np.float32())
+            new_img = np.zeros((COLS,ROWS,3), np.float32())
 
             shape = predictor(img, d)
             pntsFeatures = []
             for i in range(NUM_FEATURES):
-                x_coord, y_coord = min(cols-1, shape.part(i).x), min(rows-1, shape.part(i).y)
+                x_coord, y_coord = min(COLS-1, shape.part(i).x), min(ROWS-1, shape.part(i).y)
                 pntsFeatures.append(np.array((x_coord, y_coord)))
 
             #add border points
@@ -267,8 +267,7 @@ if __name__ == '__main__':
     #average the facial feature locations
     print "Averaging facial feature locations..."
 
-    num_images, avg_points = sum_features(transfPath)
-    avg_points = avg_points/num_images
+    avg_points = get_average_points(transfPath)
 
     #morph transformed images into the average
     print "Morphing images into output image..."
