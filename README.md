@@ -6,7 +6,7 @@ Acknowledgements:
 * The model used to identify the facial features was taken from dlib (dlib.net). This model is in the learning folder.
 
 To run the code, place all images you wish to average over in one folder and run:
-   ./main path/to/folder
+   ./main.py path/to/folder
 
 Warning: The programme transforms the images into usable versions and places them in a folder called "[FolderName]Transformed[TimeStamp]". Feel free to delete this afterwards.
 
