@@ -6,7 +6,9 @@ Acknowledgements:
 * The model used to identify the facial features was taken from dlib (dlib.net). This model is in the learning folder.
 
 To run the code, place all images you wish to average over in one folder and run:
-   ./main.py path/to/folder
+   ./main.py  [--calc-diff] path/to/folder
+
+calc-diff is an optional parameter that also outputs a CSV file, "sqr_difference.csv", with the squared differences between the average face and each input image. This may be useful for seeing which faces are shaped most like the average.
 
 Warning: The programme transforms the images into usable versions and places them in a folder called "[FolderName]Transformed[TimeStamp]". Feel free to delete this afterwards.
 

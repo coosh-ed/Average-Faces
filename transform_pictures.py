@@ -24,6 +24,7 @@ import dlib
 import glob
 import cv2
 import numpy as np
+import pandas as pd
 from skimage import io
 
 NUM_FEATURES = 68
@@ -206,7 +207,7 @@ def warp_triangle(img1, img2, tri1, tri2):
 
 
 
-def morph_to_average_face(folder_path, avg_points):
+def morph_to_average_face(folder_path, avg_points, output_diffs):
 
     #create output image
     output = np.zeros((COLS,ROWS,3), np.float32())
@@ -221,6 +222,9 @@ def morph_to_average_face(folder_path, avg_points):
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(PREDICTOR_PATH)
 
+    if output_diffs:
+        df = []
+
     #read in images
     for f in glob.glob(os.path.join(folder_path, "*.jpg")):
 
@@ -233,17 +237,22 @@ def morph_to_average_face(folder_path, avg_points):
             new_img = np.zeros((COLS,ROWS,3), np.float32())
 
             shape = predictor(img, d)
-            pntsFeatures = []
+            pnts_features = []
             for i in range(NUM_FEATURES):
                 x_coord, y_coord = min(COLS-1, shape.part(i).x), min(ROWS-1, shape.part(i).y)
-                pntsFeatures.append(np.array((x_coord, y_coord)))
+                pnts_features.append(np.array((x_coord, y_coord)))
 
             #add border points
-            pntsFeatures = add_border_points(pntsFeatures)
+            pnts_features = add_border_points(pnts_features)
             
+            if output_diffs:
+                #calculate the distance between points of two pictures
+                mean = np.mean([np.sqrt(np.sum((x-y)**2)) for x, y in zip(pnts_features, avg_points)])
+                df.append((f.strip(".jpg").split('/')[1], mean))
+
             #warp each triangle to new image
             for tri in avgTriangles:
-                inTri = [pntsFeatures[ind] for ind in tri]
+                inTri = [pnts_features[ind] for ind in tri]
                 outTri = [avg_points[ind] for ind in tri]
 
                 warp_triangle(img, new_img, inTri, outTri)
@@ -253,6 +262,10 @@ def morph_to_average_face(folder_path, avg_points):
     num_images = len(glob.glob(os.path.join(folder_path, "*.jpg")))
     output = output/(255.0*num_images)
     io.imsave("output.jpg", output)
+
+    if output_diffs:
+        df_out = pd.DataFrame(df, columns=['TD', 'difference'])
+        df_out.to_csv('differences.csv', index=False)
 
     return
 
