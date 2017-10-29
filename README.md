@@ -8,7 +8,7 @@ Acknowledgements:
 To run the code, place all images you wish to average over in one folder and run:
    ./main.py  [--calc-diff] path/to/folder
 
-calc-diff is an optional parameter that also outputs a CSV file, "sqr_difference.csv", with the squared differences between the average face and each input image. This may be useful for seeing which faces are shaped most like the average.
+calc-diff is an optional parameter that also outputs a CSV file, "sqr_difference.csv", with the squared differences between the average face and each input image. This may be useful for seeing which faces are shaped most like the average. The plot at https://imgur.com/gallery/8afvY shows the most distinctive and "average" shaped faces for the male TDs.
 
 Warning: The programme transforms the images into usable versions and places them in a folder called "[FolderName]Transformed[TimeStamp]". Feel free to delete this afterwards.
 
