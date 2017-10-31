@@ -265,6 +265,8 @@ def morph_to_average_face(folder_path, avg_points, output_diffs):
 
     if output_diffs:
         df_out = pd.DataFrame(df, columns=['TD', 'difference'])
+        print "Most distinct facial shape: {}".format(df_out.loc[df_out['difference'].idxmax()]['TD'])
+        print "Most generic facial shape: {}".format(df_out.loc[df_out['difference'].idxmin()]['TD'])
         df_out.to_csv('differences.csv', index=False)
 
     return
